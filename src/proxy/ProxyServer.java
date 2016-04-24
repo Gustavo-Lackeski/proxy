@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package proxy;
+//package proxy;
 
 import java.io.*; 
 import java.net.*; 
@@ -11,16 +11,15 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-class proxyServer { 
+class proxyServ { 
     private URL url; private URLConnection connect;
     String urlAconectar;
-   // String resource;
     //com o server
     Socket soc; InputStream is; 
     //com o cliente
     Socket soc2; OutputStream os2; BufferedReader is2;
 
-    proxyServer(Socket s) throws IOException {        
+    proxyServ(Socket s) throws IOException {        
         soc2 = s; 
         os2 = soc2.getOutputStream(); 
         is2 = new BufferedReader(new InputStreamReader(soc.getInputStream()));
@@ -32,7 +31,7 @@ class proxyServer {
             try {
                 is = connect.getInputStream();
             } catch (IOException ex) {
-                Logger.getLogger(proxyServer.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(proxyServ.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -98,7 +97,7 @@ class proxyServer {
         try { 
             ServerSocket s = new ServerSocket(8080); 
             for (;;) { 
-                proxyServer w = new proxyServer(s.accept()); 
+                proxyServ w = new proxyServ(s.accept()); 
                 w.getRequest(); 
                 w.request();
                 w.getResponse();
