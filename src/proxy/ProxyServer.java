@@ -8,45 +8,40 @@ package proxy;
 import java.io.*; 
 import java.net.*; 
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class proxyServer { 
-    String resource;
+    private URL url; private URLConnection connect;
+    String urlAconectar;
+   // String resource;
     //com o server
-    Socket soc; OutputStream os; InputStream is; 
+    Socket soc; InputStream is; 
     //com o cliente
-    Socket soc2; OutputStream os2; DataInputStream is2;
+    Socket soc2; OutputStream os2; BufferedReader is2;
 
- //.... 
-
-    proxyServer(String server, int port, Socket s) 
-                throws IOException, UnknownHostException { 
-        //comunicacao com server
-        soc = new Socket(server, port); 
-        os = soc.getOutputStream();
-        is = soc.getInputStream(); 
-        //com o cliente
+    proxyServer(Socket s) throws IOException {        
         soc2 = s; 
         os2 = soc2.getOutputStream(); 
-        is2 = new DataInputStream(soc.getInputStream());
+        is2 = new BufferedReader(new InputStreamReader(soc.getInputStream()));
         
     }
     //pega a resposta do server
     void getResponse() { 
-
-        int c; 
-        try { 
-            while ((c = is.read()) != -1) 
-              System.out.print((char) c); 
-        } catch (IOException e) { 
-        System.err.println("IOException in reading from Web server"); 
-        } 
+        if(connect.getContentLength() > 0){
+            try {
+                is = connect.getInputStream();
+            } catch (IOException ex) {
+                Logger.getLogger(proxyServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
     }
     //retorna resposta ao cliente
     void returnResponse() { 
         int c; 
         try { 
-            FileInputStream f = new FileInputStream("."+resource); 
+            FileInputStream f = new FileInputStream("."+urlAconectar); 
             while ((c = f.read()) != -1) 
                 os2.write(c) ; 
             f.close(); 
@@ -56,19 +51,22 @@ class proxyServer {
 
     }
     //faz request ao server
-    void request(String path){
+    void request(){
         try { 
-            String message = "GET" + path + "\n\n"; 
-            os.write(message.getBytes()); 
-            os.flush(); 
+            url = new URL(urlAconectar);
+            connect = url.openConnection();
+            connect.setDoInput(true);
+            connect.setDoOutput(false);
+         //   String message = "GET" + path + "\n\n"; 
+       //     os.write(message.getBytes()); 
+       //     os.flush(); 
         } catch (IOException e) { 
-        System.err.println("Error in HTTP request"); 
+            System.err.println("Error in HTTP request"); 
         }
     }
     public void close() { 
         try { 
-            is.close(); 
-            os.close(); 
+            is.close();           
             soc.close(); 
             is2.close();
             os2.close();
@@ -88,10 +86,10 @@ class proxyServer {
                 StringTokenizer t = new StringTokenizer(message);                 
                 String token = t.nextToken(); // get first token 
                 if (token.equals("GET")) // if token is ”GET” 
-                     resource = t.nextToken(); // get second token 
+                     urlAconectar = t.nextToken(); // context a URl a conectar 
             }
         } catch (IOException e) { 
-        System.err.println("Error receiving Web request"); 
+            System.err.println("Error receiving Web request"); 
         } 
     }
     
@@ -100,13 +98,13 @@ class proxyServer {
         try { 
             ServerSocket s = new ServerSocket(8080); 
             for (;;) { 
-                proxyServer w = new proxyServer("g1.globo.com", 80, s.accept()); 
+                proxyServer w = new proxyServer(s.accept()); 
                 w.getRequest(); 
-                w.request("/economia/mercados/index.html");
+                w.request();
                 w.getResponse();
                 w.returnResponse(); 
                 w.close(); 
-                } 
+            } 
 
         } catch (IOException i) { 
 
